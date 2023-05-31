@@ -1,18 +1,41 @@
-import { Button } from "components/button";
-import FormGroup from "components/common/FormGroup";
-import { Input } from "components/input";
-import { Label } from "components/label";
-import LayoutAuthentication from "layout/LayoutAuthentication";
+import useToggleValue from "hooks/useToggleValue";
 import React from "react";
+import LayoutAuthentication from "layout/LayoutAuthentication";
+import IconEyeToggle from "components/icons/IconEyeToggle";
+import FormGroup from "components/common/FormGroup";
+import ButtonGoogle from "components/button/ButtonGoogle";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
+import { Label } from "components/label";
+import { Input } from "components/input";
+import { Checkbox } from "components/checkbox";
+import { Button } from "components/button";
+
+const schema = yup.object({
+  name: yup.string().required("Please enter your fullname"),
+  email: yup
+    .string()
+    .required("Please enter your email address")
+    .email("Invalid email address"),
+  password: yup
+    .string()
+    .required("Please enter your password")
+    .min(8, "Password must be 8 character"),
+});
 
 const SignUpPage = () => {
+  const { value: acceptTerm, handleToggleValue: handleAcceptTerm } =
+    useToggleValue();
+  const { value: showPassword, handleToggleValue: handleTogglePassword } =
+    useToggleValue();
+
   const {
     handleSubmit,
     control,
-    formState: { isValid, isSubmitting },
-  } = useForm();
+    formState: { errors },
+  } = useForm({ resolver: yupResolver(schema), mode: "onSubmit" });
 
   const handleSignUp = (values) => {
     console.log(values);
@@ -26,15 +49,8 @@ const SignUpPage = () => {
           Sign in
         </Link>
       </p>
-      <button className="flex items-center justify-center py-4 border border-strock rounded-xl gap-x-3 w-full text-text2 text-base font-semibold mb-5">
-        <img
-          srcSet="./icon-google.png 2x"
-          alt="icon-google"
-          className="w-6 h-6"
-        />
-        <span>Sign up with google</span>
-      </button>
-      <p className="text-center text-xs lg:text-sm font-normal mb-4 lg:mb-8 text-text2">
+      <ButtonGoogle></ButtonGoogle>
+      <p className="text-center text-xs lg:text-sm font-normal mb-4 lg:mb-8 text-text2 dark:text-white">
         Or sign up with email
       </p>
       <form onSubmit={handleSubmit(handleSignUp)}>
@@ -44,6 +60,7 @@ const SignUpPage = () => {
             control={control}
             name="name"
             placeholder="Phan Đình Hoàng Long"
+            error={errors.name?.message}
           ></Input>
         </FormGroup>
         <FormGroup>
@@ -53,6 +70,7 @@ const SignUpPage = () => {
             name="email"
             type="email"
             placeholder="example@gmail.com"
+            error={errors.email?.message}
           ></Input>
         </FormGroup>
         <FormGroup>
@@ -60,18 +78,25 @@ const SignUpPage = () => {
           <Input
             control={control}
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Create a password"
-          ></Input>
+            error={errors.password?.message}
+          >
+            <IconEyeToggle
+              open={showPassword}
+              onClick={handleTogglePassword}
+            ></IconEyeToggle>
+          </Input>
         </FormGroup>
         <div className="flex items-start gap-x-5 mb-5">
-          <span className="inline-block w-5 h-5 rounded border border-text4 "></span>
-          <p className="text-sm text-text2 flex-1">
-            I agree to the{" "}
-            <span className="underline text-secondary">Terms of Use</span> and
-            have read and understand the{" "}
-            <span className="underline text-secondary">Privacy policy.</span>
-          </p>
+          <Checkbox name="term" checked={acceptTerm} onClick={handleAcceptTerm}>
+            <p className="text-sm text-text2 flex-1 text-sx lg:text-sm dark:text-text3">
+              I agree to the{" "}
+              <span className="underline text-secondary">Terms of Use</span> and
+              have read and understand the{" "}
+              <span className="underline text-secondary">Privacy policy.</span>
+            </p>
+          </Checkbox>
         </div>
         <Button className="bg-primary w-full" type="submit">
           Create my account

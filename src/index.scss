@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 @layer base {
   body {
     @apply font-primary text-base font-normal;
@@ -8,4 +9,8 @@
   input {
     @apply outline-none;
   }
+}
+
+input:focus + .error-input {
+  display: none;
 }
