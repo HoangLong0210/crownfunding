@@ -4,7 +4,10 @@
 
 @layer base {
   body {
-    @apply font-primary text-base font-normal;
+    @apply font-primary text-base font-normal mx-auto;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   input {
     @apply outline-none;
@@ -13,4 +16,27 @@
 
 input:focus + .error-input {
   display: none;
+}
+
+.quill {
+  @apply border border-strock rounded-xl;
+  border: 1px solid #f1f1f3;
+  border-radius: 10px;
+  padding: 15px 25px;
+  .ql-toolbar.ql-snow {
+    border: none;
+    background: none;
+    @apply bg-text4 bg-opacity-10 rounded-xl py-3 px-5;
+  }
+  .ql-container.ql-snow,
+  .ql-editor {
+    @apply border-none font-primary text-sm;
+  }
+  .ql-editor {
+    @apply pt-5;
+  }
+  .ql-editor.ql-blank::before {
+    font-style: normal;
+    @apply text-sm not-italic text-text4;
+  }
 }
