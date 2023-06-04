@@ -1,4 +1,6 @@
 import { Button } from "components/button";
+import CampaignGrid from "modules/campaign/CampaignGrid";
+import CampaignItem from "modules/campaign/CampaignItem";
 import CampaignCategory from "modules/campaign/parts/CampaignCategory";
 import CampaignDescription from "modules/campaign/parts/CampaignDescription";
 import CampaignDetailAuthor from "modules/campaign/parts/CampaignDetailAuthor";
@@ -68,16 +70,31 @@ const CampaignDetailPage = () => {
         </div>
         <Button kind="primary">Back this project</Button>
       </div>
-      <div className="grid gap-x-[124px] grid-cols-[1.3fr,1fr]">
-        <div></div>
+      <div className="grid gap-x-[124px] grid-cols-[1.3fr,1fr] mb-[70px]">
+        <div>
+          <h2 className="text-lg font-semibold uppercase mb-5">Story</h2>
+          <div className="bg-white w-full"></div>
+        </div>
         <div>
           <CampaignSupport></CampaignSupport>
           <div className="mb-[60px]"></div>
           <div className="flex flex-col gap-y-[30px]">
             <CampaignPerk></CampaignPerk>
+            <CampaignPerk></CampaignPerk>
+            <CampaignPerk></CampaignPerk>
+            <CampaignPerk></CampaignPerk>
           </div>
         </div>
       </div>
+      <h2 className="mb-10 text-xl font-semibold">
+        You also may be interested in
+      </h2>
+      <CampaignGrid>
+        <CampaignItem></CampaignItem>
+        <CampaignItem></CampaignItem>
+        <CampaignItem></CampaignItem>
+        <CampaignItem></CampaignItem>
+      </CampaignGrid>
     </Fragment>
   );
 };

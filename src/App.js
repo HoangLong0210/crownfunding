@@ -1,6 +1,13 @@
 import LayoutDashboard from "layout/LayoutDashboard";
 import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
+import Modal from "react-modal";
+
+const customStyles = {
+  content: {},
+};
+Modal.setAppElement("#root");
+Modal.defaultStyles = {};
 
 const SignUpPage = lazy(() => import("./pages/SignUpPage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
