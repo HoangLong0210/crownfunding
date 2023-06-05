@@ -1,23 +1,57 @@
-import FormGroup from "components/common/FormGroup";
-import FormRow from "components/common/FormRow";
-import { Dropdown } from "components/dropdown";
-import { Input, Textarea } from "components/input";
-import { Label } from "components/label";
-import React, { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import useOnChange from "hooks/useOnChange";
 import ReactQuill, { Quill } from "react-quill";
-import "react-quill/dist/quill.snow.css";
+import React, { useEffect, useMemo, useState } from "react";
 import ImageUploader from "quill-image-uploader";
+import ImageUpload from "components/image/ImageUpload";
+import FormRow from "components/common/FormRow";
+import FormGroup from "components/common/FormGroup";
+import DatePicker from "react-date-picker";
+import axios from "axios";
+import { useForm } from "react-hook-form";
+import { toast } from "react-toastify";
+import { Label } from "components/label";
+import { Input, Textarea } from "components/input";
+import { Dropdown } from "components/dropdown";
 import { Button } from "components/button";
+import "react-quill/dist/quill.snow.css";
+import "react-date-picker/dist/DatePicker.css";
+import "react-calendar/dist/Calendar.css";
+
 Quill.register("modules/imageUploader", ImageUploader);
 
+const categoriesData = ["architecture", "education"];
+
 const CampaignAddNew = () => {
+  const { handleSubmit, control, setValue, reset, watch } = useForm();
+
+  const getDropdownLabel = (name, defaultValue = "") => {
+    const value = watch(name) || defaultValue;
+    return value;
+  };
+
   const [content, setContent] = useState("");
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(new Date());
 
-  const { handleSubmit, control } = useForm();
+  const resetValues = () => {
+    setStartDate("");
+    setEndDate("");
+    reset({});
+  };
 
-  const handleAddNew = (value) => {
-    console.log(value);
+  const handleAddNew = async (values) => {
+    try {
+      await axios.post("http://localhost:4001/api/campaigns", {
+        ...values,
+        content,
+        startDate,
+        endDate,
+      });
+      toast.success("Create campaign successfully");
+      resetValues();
+    } catch (error) {
+      toast.error("Can not create new campaign");
+    }
   };
 
   const modules = useMemo(
@@ -33,22 +67,43 @@ const CampaignAddNew = () => {
       imageUploader: {
         // imgbbAPI
         upload: async (file) => {
-          // const bodyFormData = new FormData();
-          // bodyFormData.append("image", file);
-          // const response = await axios({
-          //   method: "post",
-          //   url: imgbbAPI,
-          //   data: bodyFormData,
-          //   headers: {
-          //     "Content-Type": "multipart/form-data",
-          //   },
-          // });
-          // return response.data.data.url;
+          const bodyFormData = new FormData();
+          bodyFormData.append("image", file);
+          const response = await axios({
+            method: "post",
+            url: "https://api.imgbb.com/1/upload?key=ebbff5c857a80d38ab6a6f6f46bce1f5",
+            data: bodyFormData,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          });
+          return response.data.data.url;
         },
       },
     }),
     []
   );
+
+  const handleSelectDropdownOption = (name, value) => {
+    setValue(name, value);
+  };
+
+  const [countries, setCountries] = useState([]);
+  const [filterCountry, setFilterCountry] = useOnChange(500);
+  useEffect(() => {
+    if (!filterCountry) return;
+    async function fetchCountries() {
+      try {
+        const response = await axios.get(
+          `https://restcountries.com/v3.1/name/${filterCountry}`
+        );
+        setCountries(response.data);
+      } catch (error) {
+        toast.error(error.message);
+      }
+    }
+    fetchCountries();
+  }, [filterCountry]);
 
   return (
     <div className="bg-white rounded-xl py-10 px-[66px]">
@@ -59,7 +114,7 @@ const CampaignAddNew = () => {
         <form onSubmit={handleSubmit(handleAddNew)}>
           <FormRow>
             <FormGroup>
-              <Label className="text-start">Campaign Title *</Label>
+              <Label>Campaign Title *</Label>
               <Input
                 control={control}
                 name="title"
@@ -67,17 +122,27 @@ const CampaignAddNew = () => {
               ></Input>
             </FormGroup>
             <FormGroup>
-              <Label className="text-start">Select a category *</Label>
+              <Label>Select a category *</Label>
               <Dropdown>
-                <Dropdown.Select placeholder="Select a category"></Dropdown.Select>
+                <Dropdown.Select
+                  placeholder={getDropdownLabel("category", "Select category")}
+                ></Dropdown.Select>
                 <Dropdown.List>
-                  <Dropdown.Option>Architecture</Dropdown.Option>
-                  <Dropdown.Option>Crypto</Dropdown.Option>
-                  <Dropdown.Option>Education</Dropdown.Option>
+                  {categoriesData.map((category) => (
+                    <Dropdown.Option
+                      key={category}
+                      onClick={() =>
+                        handleSelectDropdownOption("category", category)
+                      }
+                    >
+                      <span className="capitalize">{category}</span>
+                    </Dropdown.Option>
+                  ))}
                 </Dropdown.List>
               </Dropdown>
             </FormGroup>
           </FormRow>
+
           <FormGroup>
             <Label>Short Description *</Label>
             <Textarea
@@ -86,6 +151,7 @@ const CampaignAddNew = () => {
               control={control}
             ></Textarea>
           </FormGroup>
+
           <FormGroup>
             <Label>Story *</Label>
             <ReactQuill
@@ -96,9 +162,17 @@ const CampaignAddNew = () => {
               onChange={setContent}
             ></ReactQuill>
           </FormGroup>
+
           <FormRow>
             <FormGroup>
-              <Label className="text-start">Goal *</Label>
+              <Label>Featured Image</Label>
+              <ImageUpload onChange={setValue}></ImageUpload>
+            </FormGroup>
+          </FormRow>
+
+          <FormRow>
+            <FormGroup>
+              <Label>Goal *</Label>
               <Input
                 control={control}
                 name="goal"
@@ -106,7 +180,7 @@ const CampaignAddNew = () => {
               ></Input>
             </FormGroup>
             <FormGroup>
-              <Label className="text-start">Raised Amount *</Label>
+              <Label>Raised Amount *</Label>
               <Input
                 control={control}
                 name="amount"
@@ -114,9 +188,10 @@ const CampaignAddNew = () => {
               ></Input>
             </FormGroup>
           </FormRow>
+
           <FormRow>
             <FormGroup>
-              <Label className="text-start">Amount Prefilled</Label>
+              <Label>Amount Prefilled</Label>
               <Input
                 control={control}
                 name="prefilled"
@@ -128,57 +203,77 @@ const CampaignAddNew = () => {
               </p>
             </FormGroup>
             <FormGroup>
-              <Label className="text-start">Video</Label>
+              <Label>Video</Label>
               <Input control={control} name="video" placeholder="Video"></Input>
               <p className="text-sm text-left text-text3">
                 Place Youtube or Vimeo Video URL
               </p>
             </FormGroup>
           </FormRow>
+
           <FormRow>
             <FormGroup>
-              <Label className="text-start">Campaign End Method</Label>
+              <Label>Campaign End Method</Label>
               <Dropdown>
                 <Dropdown.Select placeholder="Select one"></Dropdown.Select>
-                <Dropdown.List>
-                  <Dropdown.Option>Architecture</Dropdown.Option>
-                  <Dropdown.Option>Crypto</Dropdown.Option>
-                  <Dropdown.Option>Education</Dropdown.Option>
-                </Dropdown.List>
+                <Dropdown.List></Dropdown.List>
               </Dropdown>
             </FormGroup>
             <FormGroup>
-              <Label className="text-start">Counrty</Label>
+              <Label>Country</Label>
               <Dropdown>
-                <Dropdown.Select placeholder="Select a country"></Dropdown.Select>
+                <Dropdown.Select
+                  placeholder={getDropdownLabel("country", "Select country")}
+                ></Dropdown.Select>
                 <Dropdown.List>
-                  <Dropdown.Option>Việt Nam</Dropdown.Option>
-                  <Dropdown.Option>Thái Lan</Dropdown.Option>
-                  <Dropdown.Option>Hàn Quốc</Dropdown.Option>
+                  <Dropdown.Search
+                    placeholder="Search country..."
+                    onChange={setFilterCountry}
+                  ></Dropdown.Search>
+                  {countries.length > 0 &&
+                    countries.map((country) => (
+                      <Dropdown.Option
+                        key={country?.name?.common}
+                        onClick={() =>
+                          handleSelectDropdownOption(
+                            "country",
+                            country?.name?.common
+                          )
+                        }
+                      >
+                        {country?.name?.common}
+                      </Dropdown.Option>
+                    ))}
                 </Dropdown.List>
               </Dropdown>
             </FormGroup>
           </FormRow>
+
           <FormRow>
             <FormGroup>
-              <Label className="text-start">Start Date</Label>
-              <Input
-                control={control}
-                name="start"
-                placeholder="Start Date"
-              ></Input>
+              <Label>Start Date</Label>
+              <DatePicker
+                onChange={setStartDate}
+                value={startDate}
+                format="dd-MM-yyyy"
+              />
             </FormGroup>
             <FormGroup>
-              <Label className="text-start">End Date</Label>
-              <Input
-                control={control}
-                name="end"
-                placeholder="End Date"
-              ></Input>
+              <Label>End Date</Label>
+              <DatePicker
+                onChange={setEndDate}
+                value={endDate}
+                format="dd-MM-yyyy"
+              />
             </FormGroup>
           </FormRow>
+
           <div className="text-center">
-            <Button kind="primary" className="mx-auto mt-10 px-10">
+            <Button
+              kind="primary"
+              className="px-10 mx-auto mt-10"
+              type="submit"
+            >
               Submit new campaign{" "}
             </Button>
           </div>
